@@ -56,9 +56,11 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.event.HandlerList;
 import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.plugin.PluginManager;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.List;
+import java.util.Objects;
 
 public class SkyBlock extends SongodaPlugin {
 
@@ -97,10 +99,14 @@ public class SkyBlock extends SongodaPlugin {
 
     private Permission vaultPermission;
 
-    private boolean paper;
+    private final boolean paper;
     private boolean paperAsync;
 
     private final GuiManager guiManager = new GuiManager(this);
+
+    public SkyBlock(boolean paper) {
+        this.paper = paper;
+    }
 
     public static SkyBlock getInstance() {
         return INSTANCE;
@@ -115,7 +121,6 @@ public class SkyBlock extends SongodaPlugin {
     private FileConfiguration levelling;
     private FileConfiguration limits;
     private FileConfiguration menus;
-    private FileConfiguration placeholders;
     private FileConfiguration rewards;
     private FileConfiguration scoreboard;
     private FileConfiguration settings;
@@ -133,7 +138,7 @@ public class SkyBlock extends SongodaPlugin {
             this.getLogger().warning("This Minecraft version is not officially supported.");
         }
 
-        if (paper = ServerProject.isServer(ServerProject.PAPER)) {
+        if (paper == ServerProject.isServer(ServerProject.PAPER)) {
             try {
                 Bukkit.spigot().getClass().getMethod("getPaperConfig");
                 if (ServerVersion.isServerVersionAtLeast(ServerVersion.V1_16)) {
@@ -159,7 +164,7 @@ public class SkyBlock extends SongodaPlugin {
 
         fileManager = new FileManager(this);
 
-        if (!loadConfigs()) {
+        if (loadConfigs()) {
             this.getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -255,13 +260,13 @@ public class SkyBlock extends SongodaPlugin {
         pluginManager.registerEvents(new Generator(), this);
         pluginManager.registerEvents(new Creator(), this);
 
-        this.getCommand("skyblock").setExecutor(new SkyBlockCommand());
+        Objects.requireNonNull(this.getCommand("skyblock")).setExecutor(new SkyBlockCommand());
 
         if (pluginManager.isPluginEnabled("Vault")) {
-            this.vaultPermission = getServer().getServicesManager().getRegistration(Permission.class).getProvider();
+            this.vaultPermission = Objects.requireNonNull(getServer().getServicesManager().getRegistration(Permission.class)).getProvider();
         }
 
-        switch (this.config.getString("Economy.Manager", "Default")) {
+        switch (Objects.requireNonNull(this.config.getString("Economy.Manager", "Default"))) {
             case "Vault":
                 getEconomyManager().setEconomy("Vault");
                 break;
@@ -312,7 +317,7 @@ public class SkyBlock extends SongodaPlugin {
 
     @Override
     public void onConfigReload() {
-        if (!loadConfigs()) this.getLogger().warning("Config are not reload !");
+        if (loadConfigs()) this.getLogger().warning("Config are not reload !");
         else this.getLogger().info("Configurations Loaded !");
     }
 
@@ -331,16 +336,16 @@ public class SkyBlock extends SongodaPlugin {
             levelling = this.getFileManager().getConfig(new File(this.getDataFolder(), "levelling.yml")).getFileConfiguration();
             limits = this.getFileManager().getConfig(new File(this.getDataFolder(), "limits.yml")).getFileConfiguration();
             menus = this.getFileManager().getConfig(new File(this.getDataFolder(), "menus.yml")).getFileConfiguration();
-            placeholders = this.getFileManager().getConfig(new File(this.getDataFolder(), "placeholders.yml")).getFileConfiguration();
+            this.getFileManager().getConfig(new File(this.getDataFolder(), "placeholders.yml")).getFileConfiguration();
             rewards = this.getFileManager().getConfig(new File(this.getDataFolder(), "rewards.yml")).getFileConfiguration();
             scoreboard = this.getFileManager().getConfig(new File(this.getDataFolder(), "scoreboard.yml")).getFileConfiguration();
             settings = this.getFileManager().getConfig(new File(this.getDataFolder(), "settings.yml")).getFileConfiguration();
             stackables = this.getFileManager().getConfig(new File(this.getDataFolder(), "stackables.yml")).getFileConfiguration();
             upgrades = this.getFileManager().getConfig(new File(this.getDataFolder(), "upgrades.yml")).getFileConfiguration();
-            return true;
+            return false;
         } catch (Exception exception) {
             exception.printStackTrace();
-            return false;
+            return true;
         }
     }
 
@@ -444,10 +449,6 @@ public class SkyBlock extends SongodaPlugin {
         return hologramTask;
     }
 
-    public MobNetherWaterTask getMobNetherWaterTask() {
-        return mobNetherWaterTask;
-    }
-
     public StackableManager getStackableManager() {
         return stackableManager;
     }
@@ -457,7 +458,7 @@ public class SkyBlock extends SongodaPlugin {
     }
 
     @Override
-    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
+    public ChunkGenerator getDefaultWorldGenerator(@NotNull String worldName, String id) {
         return worldManager.getWorldGeneratorForMapName(worldName);
     }
 
@@ -527,10 +528,6 @@ public class SkyBlock extends SongodaPlugin {
 
     public FileConfiguration getMenus() {
         return menus;
-    }
-
-    public FileConfiguration getPlaceholders() {
-        return placeholders;
     }
 
     public FileConfiguration getRewards() {
